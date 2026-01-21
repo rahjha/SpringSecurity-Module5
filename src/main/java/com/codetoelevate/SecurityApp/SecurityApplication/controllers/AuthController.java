@@ -38,4 +38,10 @@ public class AuthController {
         response.addCookie(cookie);
         return token;
     }
+
+    @PostMapping(path="/logout")
+    public ResponseEntity<String> logout(){
+        authService.logout();
+        return ResponseEntity.ok("Logged out successfully");
+    }
 }

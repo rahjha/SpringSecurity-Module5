@@ -1,8 +1,11 @@
 package com.codetoelevate.SecurityApp.SecurityApplication.filters;
 
+import com.codetoelevate.SecurityApp.SecurityApplication.entities.SessionEntity;
 import com.codetoelevate.SecurityApp.SecurityApplication.entities.User;
+import com.codetoelevate.SecurityApp.SecurityApplication.repositories.SessionEntityRepository;
 import com.codetoelevate.SecurityApp.SecurityApplication.services.JwtService;
 import com.codetoelevate.SecurityApp.SecurityApplication.services.UserService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +29,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserService userService;
-
+    private final SessionEntityRepository sessionEntityRepository;
+    String tokenFromSession;
     @Autowired
     @Qualifier("handlerExceptionResolver")
     private HandlerExceptionResolver handlerExceptionResolver;
@@ -41,7 +46,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String token = requestTokenHeader.split("Bearer ")[1];
             Long userId = jwtService.getUserIdFromToken(token);
-            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userId == null) {
+                throw new JwtException("Invalid JWT token");
+            }
+
+            SessionEntity sessionEntity = sessionEntityRepository.findById(userId).orElseThrow(() -> new JwtException("Session not found"));
+            tokenFromSession = sessionEntity.getJwtToken();
+            if(!tokenFromSession.equalsIgnoreCase(token)){
+                throw new JwtException("Token revoked or replaced");
+            }
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = userService.getUserById(userId);
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, null);
                 authenticationToken.setDetails(
