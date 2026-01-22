@@ -1,6 +1,7 @@
 package com.codetoelevate.SecurityApp.SecurityApplication.controllers;
 
 import com.codetoelevate.SecurityApp.SecurityApplication.dto.LoginDto;
+import com.codetoelevate.SecurityApp.SecurityApplication.dto.LoginResponseDto;
 import com.codetoelevate.SecurityApp.SecurityApplication.dto.SignupDto;
 import com.codetoelevate.SecurityApp.SecurityApplication.dto.UserDto;
 import com.codetoelevate.SecurityApp.SecurityApplication.services.AuthService;
@@ -30,18 +31,24 @@ public class AuthController {
     }
 
     @PostMapping(path="/login")
-    public String login(@RequestBody LoginDto loginDto, HttpServletRequest request, HttpServletResponse response){
-        String token = authService.login(loginDto);
+    public ResponseEntity<String> login(@RequestBody LoginDto loginDto, HttpServletRequest request, HttpServletResponse response){
+        LoginResponseDto loginResponseDto = authService.login(loginDto);
 
-        Cookie cookie = new Cookie("token", token);
+        Cookie cookie = new Cookie("refreshToken", loginResponseDto.getRefreshToken());
         cookie.setHttpOnly(true);
         response.addCookie(cookie);
-        return token;
+        return ResponseEntity.ok(loginResponseDto.getAccessToken());
     }
 
     @PostMapping(path="/logout")
     public ResponseEntity<String> logout(){
         authService.logout();
         return ResponseEntity.ok("Logged out successfully");
+    }
+
+    @PostMapping(path="/refresh")
+    public ResponseEntity<String> refresh(HttpServletRequest request){
+        LoginResponseDto loginResponseDto = authService.refresh(request);
+        return ResponseEntity.ok(loginResponseDto.getAccessToken());
     }
 }

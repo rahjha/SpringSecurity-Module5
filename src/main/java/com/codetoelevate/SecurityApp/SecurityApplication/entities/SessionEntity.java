@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.Date;
 
@@ -20,13 +19,13 @@ public class SessionEntity {
     private Long userId;
 
     @Column(nullable = false, length = 2048)
-    private String jwtToken;
+    private String refreshToken;
 
     @CreationTimestamp
     private Date createdAt;
 
-    public SessionEntity(Long userId, String jwtToken) {
+    public SessionEntity(Long userId, String refreshToken) {
         this.userId = userId;
-        this.jwtToken = jwtToken;
+        this.refreshToken = refreshToken;
     }
 }

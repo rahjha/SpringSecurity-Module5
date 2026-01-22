@@ -11,6 +11,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import java.io.IOException;
 import java.util.Optional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -46,15 +48,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String token = requestTokenHeader.split("Bearer ")[1];
             Long userId = jwtService.getUserIdFromToken(token);
+            log.info("userId inside JwtFilter {}", userId);
             if (userId == null) {
                 throw new JwtException("Invalid JWT token");
             }
 
-            SessionEntity sessionEntity = sessionEntityRepository.findById(userId).orElseThrow(() -> new JwtException("Session not found"));
-            tokenFromSession = sessionEntity.getJwtToken();
+            /*SessionEntity sessionEntity = sessionEntityRepository.findById(userId).orElseThrow(() -> new JwtException("Session not found"));
+            tokenFromSession = sessionEntity.getRefreshToken();
+            log.info("tokenFromSession {}", tokenFromSession);
             if(!tokenFromSession.equalsIgnoreCase(token)){
                 throw new JwtException("Token revoked or replaced");
-            }
+            }*/
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = userService.getUserById(userId);
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, null);
